@@ -1,8 +1,10 @@
 import { existsSync } from 'fs';
-import { dirname, basename, resolve } from 'path';
+import { dirname, basename, resolve, relative, join } from 'path';
 import ts from 'typescript';
 
 import { Transformer, Options } from '../typings';
+
+const GLOB_PARENT_DIR = /^([^*]*?)[/\\]\*\*?/;
 
 type CompilerOptions = Options.Typescript['compilerOptions'];
 
@@ -89,16 +91,18 @@ function compileFileFromMemory(
   const realHost = ts.createCompilerHost(compilerOptions, true);
   const dummyFileName = ts.sys.resolvePath(filename);
 
-  const isDummyFile = (fileName: string) => ts.sys.resolvePath(fileName) === dummyFileName
+  const isDummyFile = (fileName: string) =>
+    ts.sys.resolvePath(fileName) === dummyFileName;
 
   const host: ts.CompilerHost = {
     fileExists: fileName =>
       isDummyFile(fileName) || realHost.fileExists(fileName),
-    getCanonicalFileName: fileName => isDummyFile(fileName)
-      ? ts.sys.useCaseSensitiveFileNames
-        ? fileName
-        : fileName.toLowerCase()
-      : realHost.getCanonicalFileName(fileName),
+    getCanonicalFileName: fileName =>
+      isDummyFile(fileName)
+        ? ts.sys.useCaseSensitiveFileNames
+          ? fileName
+          : fileName.toLowerCase()
+        : realHost.getCanonicalFileName(fileName),
     getSourceFile: (
       fileName,
       languageVersion,
@@ -108,11 +112,11 @@ function compileFileFromMemory(
       isDummyFile(fileName)
         ? ts.createSourceFile(dummyFileName, code, languageVersion)
         : realHost.getSourceFile(
-          fileName,
-          languageVersion,
-          onError,
-          shouldCreateNewSourceFile,
-        ),
+            fileName,
+            languageVersion,
+            onError,
+            shouldCreateNewSourceFile,
+          ),
     readFile: fileName =>
       isDummyFile(fileName) ? content : realHost.readFile(fileName),
     writeFile: (fileName, data) => {
@@ -155,7 +159,7 @@ const transformer: Transformer<Options.Typescript> = ({
   options,
 }) => {
   // default options
-  const compilerOptionsJSON = {
+  const compilerOptionsJSON: any = {
     moduleResolution: 'node',
     target: 'es6',
   };
@@ -181,11 +185,26 @@ const transformer: Transformer<Options.Typescript> = ({
       }
 
       Object.assign(compilerOptionsJSON, config.compilerOptions);
+
+      if (config.include) {
+        compilerOptionsJSON.typeRoots = config.include
+          .reduce((acc: any, glob: string) => {
+            const match = glob.match(GLOB_PARENT_DIR);
+            if (match) {
+              const [, globParentDir] = match;
+              const relativePath = join(relative(process.cwd(), globParentDir));
+              acc.push(relativePath, join(relativePath, '@types'));
+            }
+            return acc;
+          }, ['node_modules/@types'].concat(compilerOptionsJSON.typeRoots))
+          .filter(Boolean);
+      }
     }
   }
 
   Object.assign(compilerOptionsJSON, options.compilerOptions);
 
+  console.log(compilerOptionsJSON);
   const {
     errors,
     options: convertedCompilerOptions,
