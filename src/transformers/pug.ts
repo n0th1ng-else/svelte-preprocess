@@ -1,5 +1,5 @@
 import detectIndent from 'detect-indent';
-import pug from 'pug';
+import pug, { compile } from 'pug';
 
 import { Transformer, Options } from '../typings';
 
@@ -54,8 +54,15 @@ const transformer: Transformer<Options.Pug> = async ({
   };
 
   const { type: identationType } = detectIndent(content);
-  const code = pug.render(`${GET_MIXINS(identationType)}\n${content}`, options);
-  return { code };
+  const code = `${GET_MIXINS(identationType)}\n${content}`;
+  const compiled = pug.compileClientWithDependenciesTracked(code, {
+    compileDebug: false,
+    ...options,
+  });
+  return {
+    code: pug.render(code, options),
+    dependencies: compiled.dependencies ? compiled.dependencies : [],
+  };
 };
 
 export default transformer;
