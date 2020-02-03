@@ -1,6 +1,5 @@
 import getAutoPreprocess from '../../src';
 import { getLanguage } from '../../src/utils';
-
 import {
   preprocess,
   getFixtureContent,
@@ -38,7 +37,7 @@ describe('options', () => {
       'template.custom',
     )}</template>`;
     const opts = getAutoPreprocess({
-      customTransformer({ content, filename }) {
+      customTransformer({ content }) {
         content = content
           .replace('foo', 'bar')
           .toString()

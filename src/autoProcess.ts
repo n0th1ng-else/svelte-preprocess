@@ -8,6 +8,7 @@ import {
   runTransformer,
   isFn,
   throwUnsupportedError,
+  getLanguage,
 } from './utils';
 import {
   PreprocessorGroup,
@@ -197,7 +198,36 @@ export function autoPreprocess(
 
       return { code, map, dependencies };
     },
-    script: scriptTransformer,
+    async script({ content, attributes, filename }) {
+      const { code, map, dependencies, diagnostics } = await scriptTransformer({
+        content,
+        attributes,
+        filename,
+      });
+
+      // if (transformers.babel) {
+      //   const { lang, alias } = getLanguage(attributes, 'javascript');
+      //   if (!preserve.includes(lang) && !preserve.includes(alias)) {
+      //     console.log(lang, alias);
+      //     const transformed = await runTransformer(
+      //       'babel',
+      //       transformers.babel,
+      //       {
+      //         content: code,
+      //         map,
+      //         filename,
+      //       },
+      //     );
+
+      //     code = transformed.code;
+      //     map = transformed.map;
+      //     dependencies = concat(dependencies, transformed.dependencies);
+      //     diagnostics = concat(diagnostics, transformed.diagnostics);
+      //   }
+      // }
+
+      return { code, map, dependencies, diagnostics };
+    },
     async style({ content, attributes, filename }) {
       let { code, map, dependencies } = await cssTransformer({
         content,
