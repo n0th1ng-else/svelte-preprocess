@@ -60,6 +60,7 @@ const transformer: Transformer<Options.Postcss> = async ({
     } else {
       console.error(e);
     }
+
     return { code: content, map, dependencies: [] as any[] };
   }
 

@@ -29,6 +29,7 @@ const transformer: Transformer<Options.Sass> = async ({
 
   if (implementation == null) {
     const mod = await importAny('node-sass', 'sass');
+
     implementation = sass = mod.default;
   }
 

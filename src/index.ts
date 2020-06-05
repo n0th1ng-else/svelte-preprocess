@@ -2,7 +2,9 @@ import { autoPreprocess } from './autoProcess';
 
 // default auto processor
 // crazy es6/cjs export mix for backward compatibility
-export default exports = module.exports = autoPreprocess;
+module.exports = autoPreprocess;
+exports = module.exports;
+export default exports;
 
 // stand-alone processors to be included manually */
 export { default as pug } from './processors/pug';
