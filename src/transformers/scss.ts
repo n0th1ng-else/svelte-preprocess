@@ -24,19 +24,22 @@ const transformer: Transformer<Options.Sass> = async ({
   filename,
   options = {},
 }) => {
-  let implementation = options?.implementation ?? sass;
-
-  if (implementation == null) {
-    const mod = await importAny('node-sass', 'sass');
-    implementation = sass = mod.default;
-  }
-
-  const { renderSync, ...sassOptions }: Options.Sass = {
+  const {
+    renderSync,
+    implementation: passedImplementation,
+    ...sassOptions
+  }: Options.Sass = {
     sourceMap: true,
     ...options,
     includePaths: getIncludePaths(filename, options.includePaths),
     outFile: `${filename}.css`,
   };
+
+  let implementation = passedImplementation ?? sass;
+  if (implementation == null) {
+    const mod = await importAny('sass', 'node-sass');
+    implementation = sass = mod.default;
+  }
 
   sassOptions.data = options.data ? options.data + content : content;
 
