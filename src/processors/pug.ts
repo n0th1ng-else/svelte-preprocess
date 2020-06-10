@@ -1,4 +1,4 @@
-import { Options, PreprocessorGroup } from '../types';
+import type { Options, PreprocessorGroup } from '../types';
 
 export default (options?: Options.Pug): PreprocessorGroup => ({
   async markup({ content, filename }) {
